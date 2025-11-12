@@ -243,4 +243,38 @@ class Dashboard extends CI_Controller {
 
         return $query->result();
     }
+
+    /**
+     * Company Dashboard
+     */
+    public function company() {
+        $data = [
+            'page_title' => 'Company Dashboard',
+            'breadcrumbs' => [
+                ['title' => 'Dashboard', 'url' => base_url('dashboard')],
+                ['title' => 'Company Dashboard']
+            ],
+            'main_content' => 'dashboard/company',
+            'stats' => $this->get_dashboard_stats()
+        ];
+
+        $this->load->view('templates/modern_layout', $data);
+    }
+
+    /**
+     * Branch Dashboard
+     */
+    public function branch() {
+        $data = [
+            'page_title' => 'Branch Dashboard',
+            'breadcrumbs' => [
+                ['title' => 'Dashboard', 'url' => base_url('dashboard')],
+                ['title' => 'Branch Dashboard']
+            ],
+            'main_content' => 'dashboard/branch',
+            'stats' => $this->get_dashboard_stats()
+        ];
+
+        $this->load->view('templates/modern_layout', $data);
+    }
 }
