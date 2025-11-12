@@ -284,4 +284,92 @@ class Accounts extends CI_Controller {
 
         $this->load->view('templates/modern_layout', $data);
     }
+
+    /**
+     * Account Categories - Display all categories with statistics
+     */
+    public function categories() {
+        $categories = $this->Account_model->get_accounts_by_category();
+        $statistics = $this->Account_model->get_category_statistics();
+
+        $data = [
+            'page_title' => 'Account Categories',
+            'breadcrumbs' => [
+                ['title' => 'Dashboard', 'url' => base_url('dashboard')],
+                ['title' => 'Accounts', 'url' => base_url('accounts')],
+                ['title' => 'Categories']
+            ],
+            'categories' => $categories,
+            'statistics' => $statistics,
+            'main_content' => 'accounts/categories'
+        ];
+
+        $this->load->view('templates/modern_layout', $data);
+    }
+
+    /**
+     * View specific category with all accounts
+     */
+    public function category($category_name) {
+        // Decode URL-encoded category name
+        $category_name = urldecode($category_name);
+
+        // Get all categories to find the requested one
+        $all_categories = $this->Account_model->get_account_categories();
+        $category = null;
+
+        foreach ($all_categories as $cat) {
+            if ($cat['name'] === $category_name) {
+                $category = $cat;
+                break;
+            }
+        }
+
+        if (!$category) {
+            show_404();
+        }
+
+        // Get accounts for this category
+        $this->db->where('account_type', $category['type']);
+        $this->db->order_by('account_code', 'ASC');
+        $accounts = $this->db->get('accounts')->result();
+
+        // Calculate balance for each account
+        foreach ($accounts as $account) {
+            $account->balance = $this->Account_model->get_balance($account->account_code);
+        }
+
+        $data = [
+            'page_title' => $category_name,
+            'breadcrumbs' => [
+                ['title' => 'Dashboard', 'url' => base_url('dashboard')],
+                ['title' => 'Accounts', 'url' => base_url('accounts')],
+                ['title' => 'Categories', 'url' => base_url('accounts/categories')],
+                ['title' => $category_name]
+            ],
+            'category' => $category,
+            'accounts' => $accounts,
+            'main_content' => 'accounts/category_view'
+        ];
+
+        $this->load->view('templates/modern_layout', $data);
+    }
+
+    /**
+     * Initialize default accounts for a category
+     */
+    public function initialize_category($category_name) {
+        // Decode URL-encoded category name
+        $category_name = urldecode($category_name);
+
+        $created_count = $this->Account_model->create_default_accounts($category_name);
+
+        if ($created_count > 0) {
+            $this->session->set_flashdata('success', "$created_count default accounts created successfully!");
+        } else {
+            $this->session->set_flashdata('info', 'All default accounts already exist for this category.');
+        }
+
+        redirect('accounts/category/' . urlencode($category_name));
+    }
 }

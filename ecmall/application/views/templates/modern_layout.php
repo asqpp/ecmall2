@@ -419,6 +419,12 @@
                         </div>
                         <span class="font-medium text-gray-700 group-hover:text-amber-600">Chart of Accounts</span>
                     </a>
+                    <a href="<?php echo base_url('accounts/categories'); ?>" class="flex items-center gap-3 p-3 rounded-lg hover:bg-amber-50 transition-all group">
+                        <div class="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-600 transition-all">
+                            <i class="fas fa-folder-tree text-amber-600 group-hover:text-white"></i>
+                        </div>
+                        <span class="font-medium text-gray-700 group-hover:text-amber-600">Account Categories</span>
+                    </a>
                     <a href="<?php echo base_url('accounting/journal'); ?>" class="flex items-center gap-3 p-3 rounded-lg hover:bg-amber-50 transition-all group">
                         <div class="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-600 transition-all">
                             <i class="fas fa-book text-amber-600 group-hover:text-white"></i>

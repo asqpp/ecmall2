@@ -180,4 +180,187 @@ class Account_model extends MY_Model {
         }
         return $this->db->count_all_results($this->table) > 0;
     }
+
+    /**
+     * Get account categories with accounts grouped by category
+     */
+    public function get_account_categories() {
+        return [
+            [
+                'name' => 'Current Assets',
+                'color' => 'green',
+                'type' => 'asset',
+                'accounts' => ['Cash', 'Bank Accounts', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses']
+            ],
+            [
+                'name' => 'Fixed Assets',
+                'color' => 'blue',
+                'type' => 'asset',
+                'accounts' => ['Land & Building', 'Furniture & Fixtures', 'Vehicles', 'Equipment', 'Computers']
+            ],
+            [
+                'name' => 'Current Liabilities',
+                'color' => 'red',
+                'type' => 'liability',
+                'accounts' => ['Accounts Payable', 'Short Term Loans', 'Outstanding Expenses', 'Provisions']
+            ],
+            [
+                'name' => 'Long Term Liabilities',
+                'color' => 'orange',
+                'type' => 'liability',
+                'accounts' => ['Long Term Loans', 'Debentures', 'Mortgage Loans']
+            ],
+            [
+                'name' => 'Capital',
+                'color' => 'purple',
+                'type' => 'equity',
+                'accounts' => ['Owner\'s Capital', 'Retained Earnings', 'Reserves', 'Drawings']
+            ],
+            [
+                'name' => 'Revenue/Income',
+                'color' => 'emerald',
+                'type' => 'income',
+                'accounts' => ['Sales Revenue', 'Service Income', 'Commission Income', 'Other Income']
+            ],
+            [
+                'name' => 'Direct Expenses',
+                'color' => 'amber',
+                'type' => 'expense',
+                'accounts' => ['Purchase', 'Direct Labour', 'Manufacturing Expenses']
+            ],
+            [
+                'name' => 'Indirect Expenses',
+                'color' => 'rose',
+                'type' => 'expense',
+                'accounts' => ['Salaries', 'Rent', 'Utilities', 'Office Expenses', 'Depreciation', 'Interest']
+            ]
+        ];
+    }
+
+    /**
+     * Get accounts grouped by category
+     */
+    public function get_accounts_by_category() {
+        $categories = $this->get_account_categories();
+        $result = [];
+
+        foreach ($categories as $category) {
+            $category_data = $category;
+            $category_data['account_details'] = [];
+
+            // Get actual accounts from database for this category type
+            $this->db->where('account_type', $category['type']);
+            $this->db->order_by('account_code', 'ASC');
+            $accounts = $this->db->get($this->table)->result();
+
+            $category_data['account_details'] = $accounts;
+            $category_data['total_accounts'] = count($accounts);
+
+            $result[] = $category_data;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get account statistics by category
+     */
+    public function get_category_statistics() {
+        $stats = [];
+
+        foreach ($this->get_account_categories() as $category) {
+            $this->db->where('account_type', $category['type']);
+            $count = $this->db->count_all_results($this->table);
+
+            $stats[] = [
+                'name' => $category['name'],
+                'color' => $category['color'],
+                'type' => $category['type'],
+                'count' => $count
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Create default accounts for a category
+     */
+    public function create_default_accounts($category_name) {
+        $categories = $this->get_account_categories();
+        $category = null;
+
+        // Find the category
+        foreach ($categories as $cat) {
+            if ($cat['name'] === $category_name) {
+                $category = $cat;
+                break;
+            }
+        }
+
+        if (!$category) {
+            return false;
+        }
+
+        $created_count = 0;
+
+        // Create each account in the category
+        foreach ($category['accounts'] as $account_name) {
+            // Generate account code
+            $account_code = $this->generate_account_code($category['type']);
+
+            // Check if account already exists by name
+            $this->db->where('account_name', $account_name);
+            $exists = $this->db->count_all_results($this->table);
+
+            if ($exists == 0) {
+                $data = [
+                    'account_code' => $account_code,
+                    'account_name' => $account_name,
+                    'account_type' => $category['type'],
+                    'category' => $category_name,
+                    'opening_balance' => 0,
+                    'current_balance' => 0
+                ];
+
+                if ($this->db->insert($this->table, $data)) {
+                    $created_count++;
+                }
+            }
+        }
+
+        return $created_count;
+    }
+
+    /**
+     * Generate account code based on type
+     */
+    private function generate_account_code($account_type) {
+        // Define prefix ranges
+        $prefixes = [
+            'asset' => '1',
+            'liability' => '2',
+            'equity' => '3',
+            'income' => '4',
+            'expense' => '5'
+        ];
+
+        $prefix = $prefixes[$account_type] ?? '9';
+
+        // Get last account code for this type
+        $this->db->select('account_code');
+        $this->db->like('account_code', $prefix, 'after');
+        $this->db->order_by('account_code', 'DESC');
+        $this->db->limit(1);
+        $query = $this->db->get($this->table);
+
+        if ($query->num_rows() > 0) {
+            $last_code = $query->row()->account_code;
+            $number = intval(substr($last_code, 1)) + 1;
+        } else {
+            $number = 1;
+        }
+
+        return $prefix . str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
 }
