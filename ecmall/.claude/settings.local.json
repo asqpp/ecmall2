@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(net start)",
+      "Bash(findstr:*)",
+      "Bash(\"c:\\xampp\\mysql\\bin\\mysqld.exe\" --version)",
+      "Bash(timeout:*)",
+      "Bash(\"c:\\xampp\\mysql\\bin\\mysql.exe\" -u root -e \"CREATE DATABASE IF NOT EXISTS cybor432_erpnew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
